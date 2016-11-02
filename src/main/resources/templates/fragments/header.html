@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+</head>
+<body>
+<div class="container" th:fragment="header">
+    <nav class="navbar navbar-light bg-faded">
+        <a class="navbar-brand" href="#">Selenium Grid Dashboard</a>
+        <ul class="nav navbar-nav">
+            <li class="nav-item active">
+                <a class="nav-link" href ="#" th:href="@{/}">Nodes Overview</a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link" href ="#" th:href="@{/gridconsole}">Grid Console</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+</body>
+</html>

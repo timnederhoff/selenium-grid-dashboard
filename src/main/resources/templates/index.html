@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Selenium Grid Dashboard</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    <script th:src="@{/webjars/momentjs/2.14.1/moment.js}"></script>
+    <style>
+        a.disabled {
+            pointer-events: none;
+        }
+
+        .glyphicon-ok-sign {
+            color: green;
+        }
+
+        .glyphicon-remove-sign {
+            color: red;
+        }
+    </style>
+    <script th:inline="javascript">
+        function minutesToDaysAndHours(minutes) {
+            var input = moment.duration(parseInt(minutes), 'minutes');
+            var days = input.days();
+            var hours = input.hours();
+            return days + " days, " + hours + " hours";
+        }
+
+        function msToDaysAndHours(ms) {
+            var input = moment.duration(parseFloat(ms));
+            var days = input.days();
+            var hours = input.hours();
+            return days + " days, " + hours + " hours";
+        }
+
+        function bytesToSize(bytes,decimals) {
+            if(bytes == 0) return '0 Byte';
+            var k = 1024; // or 1024 for binary
+            var dm = decimals + 1 || 3;
+            var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            var i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+    </script>
+</head>
+<body>
+
+<div th:replace="fragments/header :: header">
+
+</div>
+<div class="container">
+
+    <div class="alert alert-success" role="alert" th:each="successmessage : ${successmessages}" th:text="${successmessage}"></div>
+    <div class="alert alert-info" role="alert" th:each="infomessage : ${infomessages}" th:text="${infomessage}"></div>
+    <div class="alert alert-warning" role="alert" th:each="warningmessage : ${warningmessages}" th:text="${warningmessage}"></div>
+    <div class="alert alert-danger" role="alert" th:each="dangermessage : ${dangermessages}" th:text="${dangermessage}"></div>
+
+    <section id="system-info">
+        <h2>System Info:</h2>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Machine</th>
+                <th>Hostname</th>
+                <th>IP</th>
+                <th>OS</th>
+                <th>Architecture</th>
+                <th>Uptime [min]</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tr th:each="machine : ${info}">
+                <td><a th:href="@{__${machine.value.baseUrl}__:__${extrasport}__/system}" th:text="${machine.key}"></a></td>
+                <td th:text="${machine.value.systemInfo.hostname[0]}"></td>
+                <td th:text="${machine.value.systemInfo.ip[0]}"></td>
+                <td th:text="${machine.value.systemInfo.processor.info}"></td>
+                <td th:text="${machine.value.systemInfo.processor.architecture}"></td>
+                <td>
+                    <script th:inline="javascript">
+                        /*<![CDATA[*/
+                        document.currentScript.parentElement.appendChild(document.createTextNode(minutesToDaysAndHours(/*[[${machine.value.systemInfo.uptime[0]}]]*/)))
+                        /*]]>*/
+                    </script>
+                </td>
+                <td>
+                    <a role="button" class="btn btn-primary btn-sm" th:href="@{__${machine.value.baseUrl}__:__${extrasport}__/reboot}">
+                        Restart machine
+                    </a>
+                </td>
+            </tr>
+        </table>
+
+    </section>
+
+    <section id="grid-status">
+        <h2>Grid Status:</h2>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Machine</th>
+                <th>Role</th>
+                <th>Running</th>
+                <th>Node/hub PID</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tr th:each="machine : ${info}">
+                <td><a th:href="@{__${machine.value.baseUrl}__:__${extrasport}__/grid_status}" th:text="${machine.key}"></a></td>
+                <td><a th:href="@{__${machine.value.baseUrl}__:__${extrasport}__}" th:text="${machine.value.config.config_runtime.theConfigMap.default_role}"></a></td>
+                <td><span th:class="${machine.value.gridStatus.node_running}? 'glyphicon glyphicon-ok-sign' : 'glyphicon glyphicon-remove-sign'"></span></td>
+                <td th:text="${machine.value.gridStatus.node_info.pid}? ${machine.value.gridStatus.node_info.pid} : ${machine.value.gridStatus.hub_info.pid}"></td>
+                <td>
+                    <a role="button" class="btn btn-primary btn-sm" th:href="@{/stop_grid(machinename=__${machine.key}__)}">
+                        Stop hub/node
+                    </a>
+                    <a role="button" class="btn btn-primary btn-sm" th:href="@{/start_grid(machinename=__${machine.key}__)}">
+                        Start hub/node
+                    </a>
+                    <a role="button" class="btn btn-warning btn-sm" th:href="@{/stop_extras(machinename=__${machine.key}__)}">
+                        Stop Extra's
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </section>
+
+    <section id="configuration">
+        <h2>Configurations:</h2>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Machine</th>
+                <th>Auto update browser versions</th>
+                <th>Auto update drivers</th>
+                <th>Max log size</th>
+                <th>Max log age</th>
+                <th>Reboot after [# sessions]</th>
+                <th>Auto restart hub/node</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tr th:each="machine : ${info}">
+                <td><a th:href="@{__${machine.value.baseUrl}__:__${extrasport}__/config}" th:text="${machine.key}"></a></td>
+                <td>
+                    <span th:class="${machine.value.config.config_runtime.theConfigMap.auto_update_browser_versions == '1'}? 'glyphicon glyphicon-ok-sign' : 'glyphicon glyphicon-remove-sign'"></span>
+                </td>
+                <td>
+                    <span th:class="${machine.value.config.config_runtime.theConfigMap.auto_update_drivers == '1'}? 'glyphicon glyphicon-ok-sign' : 'glyphicon glyphicon-remove-sign'"></span>
+                </td>
+                <td>
+                    <script th:inline="javascript">
+                        /*<![CDATA[*/
+                        document.currentScript.parentElement.appendChild(document.createTextNode(bytesToSize(/*[[${machine.value.config.config_runtime.theConfigMap.log_maximum_size}]]*/, 2)))
+                        /*]]>*/
+                    </script>
+                </td>
+                <td>
+                    <script th:inline="javascript">
+                        /*<![CDATA[*/
+                        document.currentScript.parentElement.appendChild(document.createTextNode(msToDaysAndHours(/*[[${machine.value.config.config_runtime.theConfigMap.log_maximum_age_ms}]]*/)))
+                        /*]]>*/
+                    </script>
+                </td>
+                <td th:text="${machine.value.config.config_runtime.theConfigMap.reboot_after_sessions}"></td>
+                <td th:switch="${machine.value.config.config_runtime.theConfigMap.default_role}">
+                    <span th:case="'hub'" th:class="${machine.value.config.config_runtime.theConfigMap.auto_start_hub == '1'}? 'glyphicon glyphicon-ok-sign' : 'glyphicon glyphicon-remove-sign'"></span>
+                    <span th:case="'node'" th:class="${machine.value.config.config_runtime.theConfigMap.auto_start_node == '1'}? 'glyphicon glyphicon-ok-sign' : 'glyphicon glyphicon-remove-sign'"></span>
+                    <span th:case="*" th:text="no value for default_role">no value for default_role</span>
+                </td>
+
+                <td>
+                    <a role="button" class="btn btn-primary btn-sm" th:href="@{__${machine.value.baseUrl}__:__${extrasport}__/get_node_config}">
+                        Update config
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </section>
+
+    <section id="browser-info">
+        <h2>Browsers:</h2>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Machine</th>
+                <th>Browser</th>
+                <th>Version</th>
+                <th>Application name</th>
+                <th>Max instances</th>
+                <th>Webdriver</th>
+                <th>IE driver</th>
+                <th>Chrome driver</th>
+            </tr>
+            </thead>
+            <tr th:each="machine : ${info}" th:if="${machine.value.config.config_runtime.theConfigMap.default_role == 'node'}">
+                <td><a th:href="@{__${machine.value.baseUrl}__:__${extrasport}__/config}" th:text="${machine.key}"></a></td>
+                <td th:text="${machine.value.config.config_runtime.gridNodeList[0].capabilities[0].browserName}"></td>
+                <td th:text="${machine.value.config.config_runtime.gridNodeList[0].capabilities[0].version}"></td>
+                <td th:text="${machine.value.config.config_runtime.gridNodeList[0].capabilities[0].applicationName}"></td>
+                <td th:text="${machine.value.config.config_runtime.gridNodeList[0].capabilities[0].maxInstances}"></td>
+                <td th:text="${machine.value.config.config_runtime.theConfigMap.webdriver.version}"></td>
+                <td th:text="${machine.value.config.config_runtime.theConfigMap.iedriver.version}">no specific driver</td>
+                <td th:text="${machine.value.config.config_runtime.theConfigMap.chromedriver.version}">no specific driver</td>
+            </tr>
+        </table>
+
+    </section>
+
+    <div th:replace="fragments/footer :: footer">
+
+    </div>
+</div>
+</body>
+</html>

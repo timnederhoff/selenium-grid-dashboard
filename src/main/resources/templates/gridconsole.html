@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Selenium Grid Dashboard</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    <script th:src="@{/webjars/momentjs/2.14.1/moment.js}"></script>
+</head>
+<body>
+
+    <div th:replace="fragments/header :: header"> </div>
+
+    <div class="container">
+        <iframe src="http://localhost:4444/grid/console" th:width="1170" height="1200" frameborder="0"></iframe>
+
+        <div th:replace="fragments/footer :: footer">
+
+        </div>
+    </div>
+
+</body>
+</html>
